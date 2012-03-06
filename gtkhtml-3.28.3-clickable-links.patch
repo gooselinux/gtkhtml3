@@ -1,0 +1,32 @@
+diff -up gtkhtml-3.28.3/gtkhtml/htmltext.c.clickable-links gtkhtml-3.28.3/gtkhtml/htmltext.c
+--- gtkhtml-3.28.3/gtkhtml/htmltext.c.clickable-links	2010-03-01 02:11:35.000000000 -0500
++++ gtkhtml-3.28.3/gtkhtml/htmltext.c	2010-06-17 13:13:45.588667987 -0400
+@@ -3237,13 +3237,21 @@ html_text_magic_link (HTMLText *text, HT
+ 	}
+ 
+ 	if (exec) {
+-		for (i=0; i<MIM_N; i++) {
+-			if (mim [i].preg && !regexec (mim [i].preg, str, 2, pmatch, 0)) {
+-				paste_link (engine, text,
+-					    g_utf8_pointer_to_offset (text->text, str + pmatch [0].rm_so),
+-					    g_utf8_pointer_to_offset (text->text, str + pmatch [0].rm_eo), mim [i].prefix);
+-					rv = TRUE;
+-					break;
++		gboolean done = FALSE;
++		guint32 str_offset = 0, str_length = strlen (str);
++
++		while (!done) {
++			done = TRUE;
++			for (i = 0; i < G_N_ELEMENTS (mim); i++) {
++				if (mim [i].preg && !regexec (mim [i].preg, str + str_offset, 2, pmatch, 0)) {
++					paste_link (engine, text,
++						    g_utf8_pointer_to_offset (text->text, str + str_offset + pmatch [0].rm_so),
++						    g_utf8_pointer_to_offset (text->text, str + str_offset + pmatch [0].rm_eo), mim [i].prefix);
++						rv = TRUE;
++						str_offset += pmatch [0].rm_eo + 1;
++						done = str_offset >= str_length;
++						break;
++				}
+ 			}
+ 		}
+ 	}
